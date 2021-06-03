@@ -34,7 +34,6 @@ public abstract class ClientPlayNetworkHandlerMixin_ReturnToCorrectSlot {
 	private void send(ScreenHandlerSlotUpdateS2CPacket packet) {
 		int destSlot = TridentReturn.ORIGINAL_TRIDENT_SLOTS.removeInt(packet.getItemStack());
 		if (destSlot != -1) {
-			System.out.println("Found stack! " + destSlot);
 			ClickSlotC2SPacket c2SPacket = new ClickSlotC2SPacket(
 					packet.getSyncId(),
 					packet.getSlot(),

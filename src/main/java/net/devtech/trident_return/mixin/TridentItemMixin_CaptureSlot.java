@@ -18,7 +18,14 @@ public class TridentItemMixin_CaptureSlot {
 	public void onStoppedUsing(ItemStack stack, World world, LivingEntity user, int remainingUseTicks, CallbackInfo ci) {
 		if(world.isClient && user instanceof ClientPlayerEntity) {
 			ClientPlayerEntity entity = (ClientPlayerEntity) user;
-			TridentReturn.ORIGINAL_TRIDENT_SLOTS.put(stack.copy(), entity.inventory.selectedSlot);
+			switch (user.getActiveHand()) {
+			case MAIN_HAND:
+				TridentReturn.ORIGINAL_TRIDENT_SLOTS.put(stack.copy(), entity.inventory.selectedSlot);
+				break;
+			case OFF_HAND:
+				TridentReturn.ORIGINAL_TRIDENT_SLOTS.put(stack.copy(), 40);
+				break;
+			}
 		}
 	}
 }
