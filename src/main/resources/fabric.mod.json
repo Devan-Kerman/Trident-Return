@@ -12,5 +12,8 @@
   "environment": "*",
   "mixins": [
     "trident_return.mixins.json"
-  ]
+  ],
+  "entrypoints": {
+    "modmenu": ["net.devtech.trident_return.TridentReturn"]
+  }
 }
