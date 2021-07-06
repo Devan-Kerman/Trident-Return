@@ -30,7 +30,7 @@ public abstract class ClientPlayNetworkHandlerMixin_ReturnToCorrectSlot {
 	@Shadow public abstract void sendPacket(Packet<?> packet);
 
 	@Inject(method = "onScreenHandlerSlotUpdate",
-			at = @At(value = "INVOKE", target = "Lnet/minecraft/screen/PlayerScreenHandler;setStackInSlot(ILnet/minecraft/item/ItemStack;)V"))
+			at = @At(value = "INVOKE", target = "Lnet/minecraft/screen/PlayerScreenHandler;setStackInSlot(IILnet/minecraft/item/ItemStack;)V"))
 	public void onSetStack1(ScreenHandlerSlotUpdateS2CPacket packet, CallbackInfo ci) throws InterruptedException {
 		this.trident_return_send(packet);
 	}
@@ -49,6 +49,7 @@ public abstract class ClientPlayNetworkHandlerMixin_ReturnToCorrectSlot {
 				TridentReturnConfig.AntiCheatBypass bypass = TridentReturn.config.anticheatBypass;
 				if(bypass.enabled()) {
 					ClickSlotC2SPacket c2SPacket = new ClickSlotC2SPacket(packet.getSyncId(),
+					                                                      packet.getRevision(),
 					                                                      packet.getSlot(),
 					                                                      0,
 					                                                      SlotActionType.PICKUP,
@@ -62,6 +63,7 @@ public abstract class ClientPlayNetworkHandlerMixin_ReturnToCorrectSlot {
 					}
 
 					ClickSlotC2SPacket newPacket = new ClickSlotC2SPacket(packet.getSyncId(),
+					                                                      packet.getRevision(),
 					                                                      slotId,
 					                                                      0,
 					                                                      SlotActionType.PICKUP,
@@ -78,6 +80,7 @@ public abstract class ClientPlayNetworkHandlerMixin_ReturnToCorrectSlot {
 
 				} else {
 					ClickSlotC2SPacket c2SPacket = new ClickSlotC2SPacket(packet.getSyncId(),
+					                                                      packet.getRevision(),
 					                                                      packet.getSlot(),
 					                                                      destSlot,
 					                                                      SlotActionType.SWAP,
