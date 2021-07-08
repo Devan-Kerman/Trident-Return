@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v1
       - uses: gradle/wrapper-validation-action@v1
-      - run: ./gradlew build publishToMavenLocal --stacktrace --parallel
+      - run: ./gradlew build --stacktrace --parallel
       - uses: actions/upload-artifact@v2
         with:
           name: Artifacts
