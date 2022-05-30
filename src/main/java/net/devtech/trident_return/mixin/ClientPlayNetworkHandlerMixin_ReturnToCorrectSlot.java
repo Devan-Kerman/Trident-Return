@@ -42,7 +42,7 @@ public abstract class ClientPlayNetworkHandlerMixin_ReturnToCorrectSlot {
 	}
 
 	@Unique
-	private void trident_return_send(ScreenHandlerSlotUpdateS2CPacket packet) throws InterruptedException {
+	private void trident_return_send(ScreenHandlerSlotUpdateS2CPacket packet) {
 		if(TridentReturn.config.enabled) {
 			int destSlot = TridentReturn.ORIGINAL_TRIDENT_SLOTS.removeInt(packet.getItemStack());
 			if(destSlot != -1) {

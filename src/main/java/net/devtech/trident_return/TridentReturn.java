@@ -20,12 +20,12 @@ public class TridentReturn implements ModMenuApi {
 		public int hashCode(ItemStack o) {
 			int result = Objects.hashCode(o.getItem());
 			NbtCompound t;
-			if(o.hasTag()) {
-				NbtCompound copied = o.getTag().copy();
+			if(o.hasNbt()) {
+				NbtCompound copied = o.getNbt().copy();
 				copied.remove("Damage");
 				t = copied;
 			} else {
-				t = o.getTag();
+				t = o.getNbt();
 			}
 			result = 31 * result + Objects.hashCode(t);
 			return result;
@@ -40,7 +40,7 @@ public class TridentReturn implements ModMenuApi {
 			} else {
 				// fuzzy equals, checks if Damage is roughly equal
 				if(ItemStack.areItemsEqual(a, b)) {
-					NbtCompound ac = a.getTag(), ab = b.getTag();
+					NbtCompound ac = a.getNbt(), ab = b.getNbt();
 					if(ac == null || ab == null) {
 						return ac == ab;
 					} else {

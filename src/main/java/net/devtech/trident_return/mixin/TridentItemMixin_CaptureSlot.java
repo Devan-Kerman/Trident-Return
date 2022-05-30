@@ -17,15 +17,10 @@ public class TridentItemMixin_CaptureSlot {
 	@Inject(method = "onStoppedUsing", at = @At(value = "FIELD", target = "Lnet/minecraft/world/World;isClient:Z"))
 	public void onStoppedUsing(ItemStack stack, World world, LivingEntity user, int remainingUseTicks, CallbackInfo ci) {
 		if(TridentReturn.config.enabled) {
-			if(world.isClient && user instanceof ClientPlayerEntity) {
-				ClientPlayerEntity entity = (ClientPlayerEntity) user;
+			if(world.isClient && user instanceof ClientPlayerEntity entity) {
 				switch(user.getActiveHand()) {
-				case MAIN_HAND:
-					TridentReturn.ORIGINAL_TRIDENT_SLOTS.put(stack.copy(), entity.getInventory().selectedSlot);
-					break;
-				case OFF_HAND:
-					TridentReturn.ORIGINAL_TRIDENT_SLOTS.put(stack.copy(), 40);
-					break;
+					case MAIN_HAND -> TridentReturn.ORIGINAL_TRIDENT_SLOTS.put(stack.copy(), entity.getInventory().selectedSlot);
+					case OFF_HAND -> TridentReturn.ORIGINAL_TRIDENT_SLOTS.put(stack.copy(), 40);
 				}
 			}
 		}
