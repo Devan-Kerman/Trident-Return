@@ -18,6 +18,7 @@ import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.ClientConnection;
 import net.minecraft.network.Packet;
+import net.minecraft.network.PacketCallbacks;
 import net.minecraft.network.packet.c2s.play.ClickSlotC2SPacket;
 import net.minecraft.network.packet.s2c.play.ScreenHandlerSlotUpdateS2CPacket;
 import net.minecraft.screen.slot.Slot;
@@ -101,9 +102,11 @@ public abstract class ClientPlayNetworkHandlerMixin_ReturnToCorrectSlot {
 				throw new RuntimeException(e);
 			}
 		}
-		this.connection.send(mainPacket, future -> {
-			Thread.sleep((long) ((advancedBypass ? 500 : 100) + Math.random() * 300));
-			this.sendPacket(secondary);
-		});
+		this.connection.send(mainPacket, PacketCallbacks.always(() -> {
+			try {
+				Thread.sleep((long) ((advancedBypass ? 500 : 100) + Math.random() * 300));
+				ClientPlayNetworkHandlerMixin_ReturnToCorrectSlot.this.connection.send(secondary);
+			} catch (InterruptedException ignored) {}
+		}));
 	}
 }
