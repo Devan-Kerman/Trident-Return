@@ -18,6 +18,7 @@ import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.ClientConnection;
 import net.minecraft.network.Packet;
+import net.minecraft.network.PacketCallbacks;
 import net.minecraft.network.packet.c2s.play.ClickSlotC2SPacket;
 import net.minecraft.network.packet.s2c.play.ScreenHandlerSlotUpdateS2CPacket;
 import net.minecraft.screen.slot.Slot;
@@ -27,71 +28,22 @@ import net.minecraft.screen.slot.SlotActionType;
 public abstract class ClientPlayNetworkHandlerMixin_ReturnToCorrectSlot {
 	@Shadow @Final private MinecraftClient client;
 	@Shadow @Final private ClientConnection connection;
-	@Shadow public abstract void sendPacket(Packet<?> packet);
-
+	
+	@Shadow
+	public abstract void sendPacket(Packet<?> packet);
+	
 	@Inject(method = "onScreenHandlerSlotUpdate",
 			at = @At(value = "INVOKE", target = "Lnet/minecraft/screen/PlayerScreenHandler;setStackInSlot(IILnet/minecraft/item/ItemStack;)V"))
-	public void onSetStack1(ScreenHandlerSlotUpdateS2CPacket packet, CallbackInfo ci) throws InterruptedException {
+	public void onSetStack1(ScreenHandlerSlotUpdateS2CPacket packet, CallbackInfo ci) {
 		this.trident_return_send(packet);
 	}
-
+	
 	@Inject(method = "onScreenHandlerSlotUpdate",
 			at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/player/PlayerInventory;setStack(ILnet/minecraft/item/ItemStack;)V"))
-	public void onSetStack0(ScreenHandlerSlotUpdateS2CPacket packet, CallbackInfo ci) throws InterruptedException {
+	public void onSetStack0(ScreenHandlerSlotUpdateS2CPacket packet, CallbackInfo ci) {
 		this.trident_return_send(packet);
 	}
-
-	@Unique
-	private void trident_return_send(ScreenHandlerSlotUpdateS2CPacket packet) {
-		if(TridentReturn.config.enabled) {
-			int destSlot = TridentReturn.ORIGINAL_TRIDENT_SLOTS.removeInt(packet.getItemStack());
-			if(destSlot != -1) {
-				TridentReturnConfig.AntiCheatBypass bypass = TridentReturn.config.anticheatBypass;
-				if(bypass.enabled()) {
-					ClickSlotC2SPacket c2SPacket = new ClickSlotC2SPacket(packet.getSyncId(),
-					                                                      packet.getRevision(),
-					                                                      packet.getSlot(),
-					                                                      0,
-					                                                      SlotActionType.PICKUP,
-					                                                      ItemStack.EMPTY,
-					                                                      Int2ObjectMaps.emptyMap());
-					int slotId = 9;
-					for(Slot slot : this.client.player.playerScreenHandler.slots) {
-						if(slot.getIndex() == destSlot) {
-							slotId = slot.id;
-						}
-					}
-
-					ClickSlotC2SPacket newPacket = new ClickSlotC2SPacket(packet.getSyncId(),
-					                                                      packet.getRevision(),
-					                                                      slotId,
-					                                                      0,
-					                                                      SlotActionType.PICKUP,
-					                                                      packet.getItemStack(),
-					                                                      Int2ObjectMaps.emptyMap());
-
-					if(bypass == TridentReturnConfig.AntiCheatBypass.ADVANCED) {
-						CompletableFuture.runAsync(() -> {
-							this.trident_return_sendPacket(c2SPacket, newPacket, true);
-						});
-					} else {
-						this.trident_return_sendPacket(c2SPacket, newPacket, false);
-					}
-
-				} else {
-					ClickSlotC2SPacket c2SPacket = new ClickSlotC2SPacket(packet.getSyncId(),
-					                                                      packet.getRevision(),
-					                                                      packet.getSlot(),
-					                                                      destSlot,
-					                                                      SlotActionType.SWAP,
-					                                                      packet.getItemStack(),
-					                                                      Int2ObjectMaps.emptyMap());
-					this.sendPacket(c2SPacket);
-				}
-			}
-		}
-	}
-
+	
 	@Unique
 	public void trident_return_sendPacket(ClickSlotC2SPacket mainPacket, ClickSlotC2SPacket secondary, boolean advancedBypass) {
 		if(advancedBypass) {
@@ -101,9 +53,70 @@ public abstract class ClientPlayNetworkHandlerMixin_ReturnToCorrectSlot {
 				throw new RuntimeException(e);
 			}
 		}
-		this.connection.send(mainPacket, future -> {
-			Thread.sleep((long) ((advancedBypass ? 500 : 100) + Math.random() * 300));
-			this.sendPacket(secondary);
-		});
+		this.connection.send(mainPacket, PacketCallbacks.always(() -> {
+			try {
+				Thread.sleep((long) ((advancedBypass ? 500 : 100) + Math.random() * 300));
+				this.sendPacket(secondary);
+			} catch(InterruptedException e) {
+				e.printStackTrace();
+			}
+		}));
+	}
+	
+	@Unique
+	private void trident_return_send(ScreenHandlerSlotUpdateS2CPacket packet) {
+		if(TridentReturn.config.enabled) {
+			int destSlot = TridentReturn.ORIGINAL_TRIDENT_SLOTS.removeInt(packet.getItemStack());
+			if(destSlot != -1) {
+				TridentReturnConfig.AntiCheatBypass bypass = TridentReturn.config.anticheatBypass;
+				if(bypass.enabled()) {
+					ClickSlotC2SPacket c2SPacket = new ClickSlotC2SPacket(
+							packet.getSyncId(),
+							packet.getRevision(),
+							packet.getSlot(),
+							0,
+							SlotActionType.PICKUP,
+							ItemStack.EMPTY,
+							Int2ObjectMaps.emptyMap()
+					);
+					int slotId = 9;
+					for(Slot slot : this.client.player.playerScreenHandler.slots) {
+						if(slot.getIndex() == destSlot) {
+							slotId = slot.id;
+						}
+					}
+					
+					ClickSlotC2SPacket newPacket = new ClickSlotC2SPacket(
+							packet.getSyncId(),
+							packet.getRevision(),
+							slotId,
+							0,
+							SlotActionType.PICKUP,
+							packet.getItemStack(),
+							Int2ObjectMaps.emptyMap()
+					);
+					
+					if(bypass == TridentReturnConfig.AntiCheatBypass.ADVANCED) {
+						CompletableFuture.runAsync(() -> {
+							this.trident_return_sendPacket(c2SPacket, newPacket, true);
+						});
+					} else {
+						this.trident_return_sendPacket(c2SPacket, newPacket, false);
+					}
+					
+				} else {
+					ClickSlotC2SPacket c2SPacket = new ClickSlotC2SPacket(
+							packet.getSyncId(),
+							packet.getRevision(),
+							packet.getSlot(),
+							destSlot,
+							SlotActionType.SWAP,
+							packet.getItemStack(),
+							Int2ObjectMaps.emptyMap()
+					);
+					this.sendPacket(c2SPacket);
+				}
+			}
+		}
 	}
 }

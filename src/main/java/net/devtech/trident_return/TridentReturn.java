@@ -5,6 +5,7 @@ import java.util.Objects;
 import com.terraformersmc.modmenu.api.ConfigScreenFactory;
 import com.terraformersmc.modmenu.api.ModMenuApi;
 import it.unimi.dsi.fastutil.Hash;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenCustomHashMap;
 import me.shedaniel.autoconfig.AutoConfig;
 import me.shedaniel.autoconfig.serializer.Toml4jConfigSerializer;
@@ -13,9 +14,24 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 
 public class TridentReturn implements ModMenuApi {
+	public static final Object2IntMap<ItemStack> ORIGINAL_TRIDENT_SLOTS = new Object2IntOpenCustomHashMap<>(new FuzzyItemStackStrategy());
 	public static TridentReturnConfig config;
-	public static final Object2IntOpenCustomHashMap<ItemStack> ORIGINAL_TRIDENT_SLOTS =
-			new Object2IntOpenCustomHashMap<>(new Hash.Strategy<ItemStack>() {
+	
+	static {
+		ORIGINAL_TRIDENT_SLOTS.defaultReturnValue(-1);
+	}
+	
+	public TridentReturn() {
+		AutoConfig.register(TridentReturnConfig.class, Toml4jConfigSerializer::new);
+		config = AutoConfig.getConfigHolder(TridentReturnConfig.class).getConfig();
+	}
+	
+	@Override
+	public ConfigScreenFactory<?> getModConfigScreenFactory() {
+		return parent -> AutoConfig.getConfigScreen(TridentReturnConfig.class, parent).get();
+	}
+	
+	private static class FuzzyItemStackStrategy implements Hash.Strategy<ItemStack> {
 		@Override
 		public int hashCode(ItemStack o) {
 			int result = Objects.hashCode(o.getItem());
@@ -30,7 +46,7 @@ public class TridentReturn implements ModMenuApi {
 			result = 31 * result + Objects.hashCode(t);
 			return result;
 		}
-
+		
 		@Override
 		public boolean equals(ItemStack a, ItemStack b) {
 			if(a == b) {
@@ -55,19 +71,5 @@ public class TridentReturn implements ModMenuApi {
 				return false;
 			}
 		}
-	});
-
-	static {
-		ORIGINAL_TRIDENT_SLOTS.defaultReturnValue(-1);
-	}
-
-	public TridentReturn() {
-		AutoConfig.register(TridentReturnConfig.class, Toml4jConfigSerializer::new);
-		config = AutoConfig.getConfigHolder(TridentReturnConfig.class).getConfig();
-	}
-
-	@Override
-	public ConfigScreenFactory<?> getModConfigScreenFactory() {
-		return parent -> AutoConfig.getConfigScreen(TridentReturnConfig.class, parent).get();
 	}
 }
